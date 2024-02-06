@@ -74,6 +74,7 @@ contract GitXDC is ERC1155 {
     }
 
     function editRepo(string _code,string _filename) public Handler returns(bool){
+        //add ability to save multiple files at the same time
         bool isNewFile = true;
         //checks to see if file is present and edits the code
         for(uint i = 0;i < repo[branch].versions[_version].filenames.length;i++){
@@ -92,7 +93,7 @@ contract GitXDC is ERC1155 {
         emit edit(block.timestamp,versionCount);
         return (true);
     }
-
+    //merge code from 3rd party contracts
     function MergePullRequest(address _repo,string _title,string _comments, bool _merge)public  Handler returns(bool){
         emit comment(_title,_comment);
         emit edit(block.timestamp,versionCount);
@@ -103,15 +104,13 @@ contract GitXDC is ERC1155 {
     //view all pull request
     function ViewAllPullRequest()public view returns(bool){}
     //view all generated contracts that have forked a current version of the code
-    function ViewAllForks(string memory _forkName )public view returns(bool){
+    function ViewAllForks(string memory _forkName )public view returns(bool){}
+    //generates a new contract with version of code inside
+    function CreateFork()public view returns(bool){
         require(_forkName != "MAIN","you cant create a fork with the same branch name as MAIN");
         require(_forkName != branch,"you cant create a fork with the same branch name as the current fork");
     }
-    //generates a new contract with version of code inside
-    function CreateFork()public view returns(bool){}
-
-    function forwardBranch(uint _intBranch)public view returns(bool,uint,string memory){}
-
+    //allows people to clone software from the smart contract
     function CloneRepo(uint _version) public view returns (string[] memory, string[] memory) {
         return (repo[branch].versions[_version].code, repo[branch].versions[_version].filenames);
     }
