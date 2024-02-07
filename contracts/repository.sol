@@ -63,7 +63,7 @@ contract GitXDC is ERC1155 {
     /// @return Documents the return variables of a contract’s function state variable
     /// @inheritdoc	Copies all missing tags from the base function (must be followed by the contract name)
 
-    constructor(string memory _repoName,uint _totalRepoKeys,string memory _description, string[] memory _code, string[] memory _filenames,_URI) ERC1155(_URI) {
+    constructor(string memory _repoName,uint _totalRepoKeys,string memory _description, string[] memory _code, string[] memory _filenames,_URI,_branch) ERC1155(_URI) {
         _mint(msg.sender, handlerToken,_totalRepoKeys, "");
 
         totalRepoKeys = _totalRepoKeys;
@@ -72,7 +72,7 @@ contract GitXDC is ERC1155 {
 
         version[versionCount] = Versions(_code, _filenames, versionCount);
         repo[branch] = Repo(_repoName, version[versionCount]);
-
+        branch == _branch;
         versionCount++;
     }
 
@@ -107,13 +107,11 @@ contract GitXDC is ERC1155 {
     function makePullRequest()public returns(bool){
         return true;
     }
-
     //trigger pull request
     function openPullRequest(address _repo,string memory _title, string memory _description)external returns(bool){
         totalPullRequest++;
         return true;
     }
-    
     //view all pull request
     function viewAllPullRequests() public view returns (AllPullRequest[] memory) {
         AllPullRequest[] memory pullRequestsList = new AllPullRequest[](totalPullRequest);
@@ -122,7 +120,6 @@ contract GitXDC is ERC1155 {
         }
         return pullRequestsList;
     }
-
     //view all generated contracts that have forked a current version of the code
     function viewAllForks() public view returns (Branches[] memory) {
         Branches[] memory branchesList = new Branches[](totalBranches);
@@ -132,11 +129,11 @@ contract GitXDC is ERC1155 {
         return branchesList;
     }
     //generates a new contract with version of code inside
-    function createFork(string memory _repoName,uint _totalRepoKeys,string memory _description,_URI)public returns(bool){
-        require(_forkName != "MAIN","you cant create a fork with the same branch name as MAIN");
-        require(_forkName != branch,"you cant create a fork with the same branch name as the current fork");
+    function createFork(string memory _branchName,string memory _repoName,uint _totalRepoKeys,string memory _description,_URI)public returns(bool){
+        require(_branchName != "MAIN","you cant create a fork with the same branch name as MAIN");
+        require(_branchName != branch,"you cant create a fork with the same branch name as the current fork");
 
-        GitXDC newContract = new GitXDC(_repoName, _totalRepoKeys, _description,repo[branch].versions[_version].code, repo[branch].versions[_version].filenames,_URI);
+        GitXDC newContract = new GitXDC(_repoName, _totalRepoKeys, _description,repo[branch].versions[_version].code, repo[branch].versions[_version].filenames,_URI,_branchName);
         fork[totalBranches] = Branches(newContract,_repoName,_description);
         emit GitXDCContractCreated(msg.sender, address(newContract), _initialData);
         return true;
