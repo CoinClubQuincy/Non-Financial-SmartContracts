@@ -16,14 +16,17 @@ contract GitXDC is ERC1155 {
     string public handlerToken = 0;
     uint public totalRepoKeys;
     uint public totalBranches = 0;
+    uint public totalPullRequest = 0;
     //maybe place award amount havent mad mind up yet
 
     mapping(string => Repo) public repo;
     mapping(uint => Versions) public version;
     mapping(uint => AllPullRequest) public pull;
+    mapping(uint => Branches) public fork;
 
     event edit(uint _timestamp,_msg, uint _version);
     event comment(_title,_comment);
+    event GitXDCContractCreated(address indexed creator, address indexed gitXDCContract, uint initialData);
 
     struct Repo {
         string name;
@@ -94,24 +97,52 @@ contract GitXDC is ERC1155 {
         return (true);
     }
     //merge code from 3rd party contracts
-    function MergePullRequest(address _repo,string _title,string _comments, bool _merge)public  Handler returns(bool){
+    function mergePullRequest(address _repo,string _title,string _comments, bool _merge)public  Handler returns(bool){
+
         emit comment(_title,_comment);
         emit edit(block.timestamp,versionCount);
         return true;
     }
-    //create a pull request
-    function OpenPullRequest(address _repo,string memory _title, string memory _description)public returns(bool){}
+    //make pull request
+    function makePullRequest()public returns(bool){
+        return true;
+    }
+
+    //trigger pull request
+    function openPullRequest(address _repo,string memory _title, string memory _description)external returns(bool){
+        totalPullRequest++;
+        return true;
+    }
+    
     //view all pull request
-    function ViewAllPullRequest()public view returns(bool){}
+    function viewAllPullRequests() public view returns (AllPullRequest[] memory) {
+        AllPullRequest[] memory pullRequestsList = new AllPullRequest[](totalPullRequest);
+        for (uint i = 0; i < totalPullRequest; i++) {
+            pullRequestsList[i] = pull[i];
+        }
+        return pullRequestsList;
+    }
+
     //view all generated contracts that have forked a current version of the code
-    function ViewAllForks(string memory _forkName )public view returns(bool){}
+    function viewAllForks() public view returns (Branches[] memory) {
+        Branches[] memory branchesList = new Branches[](totalBranches);
+        for (uint i = 0; i < totalBranches; i++) {
+            branchesList[i] = fork[i];
+        }
+        return branchesList;
+    }
     //generates a new contract with version of code inside
-    function CreateFork()public view returns(bool){
+    function createFork(string memory _repoName,uint _totalRepoKeys,string memory _description,_URI)public returns(bool){
         require(_forkName != "MAIN","you cant create a fork with the same branch name as MAIN");
         require(_forkName != branch,"you cant create a fork with the same branch name as the current fork");
+
+        GitXDC newContract = new GitXDC(_repoName, _totalRepoKeys, _description,repo[branch].versions[_version].code, repo[branch].versions[_version].filenames,_URI);
+        fork[totalBranches] = Branches(newContract,_repoName,_description);
+        emit GitXDCContractCreated(msg.sender, address(newContract), _initialData);
+        return true;
     }
     //allows people to clone software from the smart contract
-    function CloneRepo(uint _version) public view returns (string[] memory, string[] memory) {
+    function cloneRepo(uint _version) public view returns (string[] memory, string[] memory) {
         return (repo[branch].versions[_version].code, repo[branch].versions[_version].filenames);
     }
 }
