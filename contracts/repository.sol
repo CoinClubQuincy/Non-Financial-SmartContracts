@@ -17,12 +17,14 @@ contract GitXDC is ERC1155 {
     uint public totalRepoKeys;
     uint public totalBranches = 0;
     uint public totalPullRequest = 0;
+     uint public totalThreads = 0;
     //maybe place award amount havent mad mind up yet
 
     mapping(string => Repo) public repo;
     mapping(uint => Versions) public version;
     mapping(uint => AllPullRequest) public pull;
     mapping(uint => Branches) public fork;
+    mapping(uint => Thread) public thread;
 
     event edit(uint _timestamp,_msg, uint _version);
     event comment(_title,_comment);
@@ -48,6 +50,16 @@ contract GitXDC is ERC1155 {
     struct Branches{
         address contracts;
         string branchName;
+        string description;
+    }
+    struct Thread{
+        string title;
+        string description;
+        Comment[] comments;
+    }
+    struct Comment{
+        address user;
+        string title;
         string description;
     }
 
@@ -103,13 +115,18 @@ contract GitXDC is ERC1155 {
         emit edit(block.timestamp,versionCount);
         return true;
     }
-    //make pull request
-    function makePullRequest()public returns(bool){
+    //merge pull request
+    function mergePullRequest(uint _pullrequest)public Handler returns(bool){
         return true;
     }
     //trigger pull request
-    function openPullRequest(address _repo,string memory _title, string memory _description)external returns(bool){
+    function openPullRequest(string memory _title, string memory _description)external returns(bool){
+        pull[totalPullRequest] = AllPullRequest(msg.sender,_title,_description);
+        thread[totalThreads] = Thread("New Pull Request: " + _title ,_description);
+
+        totalThreads++;
         totalPullRequest++;
+        emit comment("New Pull Request:",_description);
         return true;
     }
     //view all pull request
