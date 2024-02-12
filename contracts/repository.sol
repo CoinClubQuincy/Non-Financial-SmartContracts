@@ -46,6 +46,7 @@ contract GitXDC is ERC1155 {
         address repo;
         string title;
         string messeage;
+        uint version;
     }
 
     struct Branches{
@@ -89,40 +90,47 @@ contract GitXDC is ERC1155 {
         versionCount++;
     }
 
-    function editRepo(string _code, string _filename) public Handler returns(bool) {
+function editRepo(string[] memory _code, string[] memory _filenames) public Handler returns(bool) {
+    require(_code.length == _filenames.length, "Code and filenames arrays must have the same length");
+    for(uint i = 0; i < _code.length; i++) {
         bool isNewFile = true;
-        uint i;
-        for(i = 0; i < repo[branch].versions[versionCount].filenames.length; i++) {
-            if(repo[branch].versions[versionCount].filenames[i] == _filename) {
-                repo[branch].versions[versionCount].code[i] = _code;
+        for(uint j = 0; j < repo[branch].versions[versionCount].filenames.length; j++) {
+            if(keccak256(abi.encodePacked(repo[branch].versions[versionCount].filenames[j])) == keccak256(abi.encodePacked(_filenames[i]))) {
+                repo[branch].versions[versionCount].code[j] = _code[i];
                 isNewFile = false;
                 break;
             }
         }
         if(isNewFile) {
-            repo[branch].versions[versionCount].code.push(_code);
-            repo[branch].versions[versionCount].filenames.push(_filename);
+            repo[branch].versions[versionCount].code.push(_code[i]);
+            repo[branch].versions[versionCount].filenames.push(_filenames[i]);
         }
-        if(!isNewFile || (isNewFile && bytes(_code).length > 0)) {
-            versionCount++;
-            emit edit(block.timestamp, versionCount);
-            return true;
+    }
+    versionCount++;
+    emit edit(block.timestamp, "Edited multiple files", versionCount);
+    return true;
+}
+    //merge code from 3rd party contracts
+    function mergePullRequest(address _repo, string memory _title, string memory _comments) public Handler returns(bool) {
+        for(uint i = 0; i < totalPullRequest; i++) {
+            if(pull[i].repo == _repo && keccak256(abi.encodePacked(pull[i].title)) == keccak256(abi.encodePacked(_title))) {
+
+                (string[] memory code, string[] memory filenames) = GitXDC(_repo).cloneRepo(pull[i].version);
+                
+                for(uint j = 0; j < code.length; j++) {
+                    editRepo(code[j], filenames[j]);
+                }
+            
+                emit comment(_title, _comments);
+                emit edit(block.timestamp, versionCount);
+                return true;
+            }
         }
         return false;
     }
-    //merge code from 3rd party contracts
-    function mergePullRequest(address _repo,string _title,string _comments, bool _merge)public  Handler returns(bool){
-
-
-
-
-        emit comment(_title,_comment);
-        emit edit(block.timestamp,versionCount);
-        return true;
-    }
     //trigger pull request
-    function openPullRequest(string memory _title, string memory _description)external returns(bool){
-        pull[totalPullRequest] = AllPullRequest(msg.sender,_title,_description);
+    function openPullRequest(string memory _title, string memory _description,uint _version)external returns(bool){
+        pull[totalPullRequest] = AllPullRequest(msg.sender,_title,_description,_version);
         thread[totalThreads] = Thread("New Pull Request: " + _title ,_description);
 
         totalThreads++;
