@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/IERC20/IERC20.sol";
-
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title GitXDC
 /// @author R Quincy Jones
@@ -12,12 +12,13 @@ import "@openzeppelin/contracts/token/IERC20/IERC20.sol";
 contract GitXDC is ERC1155 {
     uint public versionCount = 0;
     string public branch = "MAIN";
+    string public name;
     string public description;
-    string public handlerToken = 0;
+    uint public handlerToken = 0;
     uint public totalRepoKeys;
     uint public totalBranches = 0;
     uint public totalPullRequest = 0;
-     uint public totalThreads = 0;
+    uint public totalThreads = 0;
     //maybe place award amount havent mad mind up yet
 
     mapping(string => Repo) public repo;
@@ -26,9 +27,9 @@ contract GitXDC is ERC1155 {
     mapping(uint => Branches) public fork;
     mapping(uint => Thread) public thread;
 
-    event edit(uint _timestamp,_msg, uint _version);
-    event comment(_title,_comment);
-    event GitXDCContractCreated(address indexed creator, address indexed gitXDCContract, uint initialData);
+    event edit(uint _timestamp,string _msg, uint _version);
+    event comment(string _title,string _comment);
+    event GitXDCContractCreated(address indexed creator, address indexed gitXDCContract);
 
     struct Repo {
         string name;
@@ -84,39 +85,39 @@ contract GitXDC is ERC1155 {
 
         version[versionCount] = Versions(_code, _filenames, versionCount);
         repo[branch] = Repo(_repoName, version[versionCount]);
-        branch == _branch;
+        branch = _branch;
         versionCount++;
     }
 
-    function editRepo(string _code,string _filename) public Handler returns(bool){
-        //add ability to save multiple files at the same time
+    function editRepo(string _code, string _filename) public Handler returns(bool) {
         bool isNewFile = true;
-        //checks to see if file is present and edits the code
-        for(uint i = 0;i < repo[branch].versions[_version].filenames.length;i++){
-            if(repo[branch].versions[_version].filenames[i] == _filename){
-                repo[branch].versions[_version].code[i] = _code;
+        uint i;
+        for(i = 0; i < repo[branch].versions[versionCount].filenames.length; i++) {
+            if(repo[branch].versions[versionCount].filenames[i] == _filename) {
+                repo[branch].versions[versionCount].code[i] = _code;
                 isNewFile = false;
-            } 
-            // if file is not found create file and place code as next item in array
-            //runs if code if file is not found
-            if(i == repo[branch].versions[_version].filenames.length && isNewFile == true){
-                repo[branch].versions[_version].code[i+1] = _code;
-                repo[branch].versions[_version].filenames[i+1] = _filename;
+                break;
             }
         }
-        versionCount++;
-        emit edit(block.timestamp,versionCount);
-        return (true);
+        if(isNewFile) {
+            repo[branch].versions[versionCount].code.push(_code);
+            repo[branch].versions[versionCount].filenames.push(_filename);
+        }
+        if(!isNewFile || (isNewFile && bytes(_code).length > 0)) {
+            versionCount++;
+            emit edit(block.timestamp, versionCount);
+            return true;
+        }
+        return false;
     }
     //merge code from 3rd party contracts
     function mergePullRequest(address _repo,string _title,string _comments, bool _merge)public  Handler returns(bool){
 
+
+
+
         emit comment(_title,_comment);
         emit edit(block.timestamp,versionCount);
-        return true;
-    }
-    //merge pull request
-    function mergePullRequest(uint _pullrequest)public Handler returns(bool){
         return true;
     }
     //trigger pull request
@@ -140,19 +141,21 @@ contract GitXDC is ERC1155 {
     //view all generated contracts that have forked a current version of the code
     function viewAllForks() public view returns (Branches[] memory) {
         Branches[] memory branchesList = new Branches[](totalBranches);
+        
         for (uint i = 0; i < totalBranches; i++) {
             branchesList[i] = fork[i];
         }
         return branchesList;
     }
     //generates a new contract with version of code inside
-    function createFork(string memory _branchName,string memory _repoName,uint _totalRepoKeys,string memory _description,_URI)public returns(bool){
+    function createFork(uint _version,string memory _branchName,string memory _repoName,uint _totalRepoKeys,string memory _description,_URI)public returns(bool){
         require(_branchName != "MAIN","you cant create a fork with the same branch name as MAIN");
         require(_branchName != branch,"you cant create a fork with the same branch name as the current fork");
 
         GitXDC newContract = new GitXDC(_repoName, _totalRepoKeys, _description,repo[branch].versions[_version].code, repo[branch].versions[_version].filenames,_URI,_branchName);
+
         fork[totalBranches] = Branches(newContract,_repoName,_description);
-        emit GitXDCContractCreated(msg.sender, address(newContract), _initialData);
+        emit GitXDCContractCreated(msg.sender, address(newContract));
         return true;
     }
     //allows people to clone software from the smart contract
