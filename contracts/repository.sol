@@ -9,6 +9,35 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// @notice this is a repository stored on chain to version code
 /// @dev a free open source github alternative
 
+contract RepoDeployer{
+    uint public totalRepos = 0;
+
+    event createNewRepo(address indexed creator, address indexed gitXDCContract);
+
+    mapping(uint => Repo) public repos;
+    struct Repo {
+        string name;
+        string description;
+        address contractAddress;
+    }
+
+    function createRepo(string memory _repoName,uint _totalRepoKeys,string memory _description, string[] memory _code, string[] memory _filenames,_URI,_branch) public returns(address){
+        GitXDC newContract = new GitXDC(_repoName, _totalRepoKeys, _description, _code, _filenames,_URI,_branch);
+        repos[totalRepos] = Repo(_repoName, _description,newContract);
+        emit createNewRepo(msg.sender, address(newContract));
+        return address(newContract);
+    }
+
+    function viewAllRepos() public view returns (Repo[] memory) {
+        Repo[] memory reposList = new Repo[](totalRepos);
+        for (uint i = 0; i < totalRepos; i++) {
+            reposList[i] = repos[i];
+        }
+        return reposList;
+    }
+}
+
+
 contract GitXDC is ERC1155 {
     uint public versionCount = 0;
     string public branch = "MAIN";
@@ -19,7 +48,6 @@ contract GitXDC is ERC1155 {
     uint public totalBranches = 0;
     uint public totalPullRequest = 0;
     uint public totalThreads = 0;
-    //maybe place award amount havent mad mind up yet
 
     mapping(string => Repo) public repo;
     mapping(uint => Versions) public version;
@@ -84,26 +112,26 @@ contract GitXDC is ERC1155 {
         versionCount++;
     }
 
-function editRepo(string[] memory _code, string[] memory _filenames) public Handler returns(bool) {
-    require(_code.length == _filenames.length, "Code and filenames arrays must have the same length");
-    for(uint i = 0; i < _code.length; i++) {
-        bool isNewFile = true;
-        for(uint j = 0; j < repo[branch].versions[versionCount].filenames.length; j++) {
-            if(keccak256(abi.encodePacked(repo[branch].versions[versionCount].filenames[j])) == keccak256(abi.encodePacked(_filenames[i]))) {
-                repo[branch].versions[versionCount].code[j] = _code[i];
-                isNewFile = false;
-                break;
+    function editRepo(string[] memory _code, string[] memory _filenames) public Handler returns(bool) {
+        require(_code.length == _filenames.length, "Code and filenames arrays must have the same length");
+        for(uint i = 0; i < _code.length; i++) {
+            bool isNewFile = true;
+            for(uint j = 0; j < repo[branch].versions[versionCount].filenames.length; j++) {
+                if(keccak256(abi.encodePacked(repo[branch].versions[versionCount].filenames[j])) == keccak256(abi.encodePacked(_filenames[i]))) {
+                    repo[branch].versions[versionCount].code[j] = _code[i];
+                    isNewFile = false;
+                    break;
+                }
+            }
+            if(isNewFile) {
+                repo[branch].versions[versionCount].code.push(_code[i]);
+                repo[branch].versions[versionCount].filenames.push(_filenames[i]);
             }
         }
-        if(isNewFile) {
-            repo[branch].versions[versionCount].code.push(_code[i]);
-            repo[branch].versions[versionCount].filenames.push(_filenames[i]);
-        }
+        versionCount++;
+        emit edit(block.timestamp, "Edited multiple files", versionCount);
+        return true;
     }
-    versionCount++;
-    emit edit(block.timestamp, "Edited multiple files", versionCount);
-    return true;
-}
     //merge code from 3rd party contracts
     function mergePullRequest(address _repo, string memory _title, string memory _comments) public Handler returns(bool) {
         for(uint i = 0; i < totalPullRequest; i++) {
@@ -123,8 +151,8 @@ function editRepo(string[] memory _code, string[] memory _filenames) public Hand
         return false;
     }
     //trigger pull request
-    function openPullRequest(string memory _title, string memory _description,uint _version)external returns(bool){
-        pull[totalPullRequest] = AllPullRequest(msg.sender,_title,_description,_version);
+    function openPullRequest(string memory _title, string memory _description,uint _version,address _contract)external returns(bool){
+        pull[totalPullRequest] = AllPullRequest(_contract,_title,_description,_version);
         thread[totalThreads] = Thread("New Pull Request: " + _title ,_description);
 
         totalThreads++;
