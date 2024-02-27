@@ -1,44 +1,13 @@
 // SPDX-License-Identifier: MIT License
 pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/token/IERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/// @title GitXDC
+/// @title XDRepository
 /// @author R Quincy Jones
 /// @notice this is a repository stored on chain to version code
 /// @dev a free open source github alternative
 
-contract RepoDeployer{
-    uint public totalRepos = 0;
-
-    event createNewRepo(address indexed creator, address indexed gitXDCContract);
-
-    mapping(uint => Repo) public repos;
-    struct Repo {
-        string name;
-        string description;
-        address contractAddress;
-    }
-
-    function createRepo(string memory _repoName,uint _totalRepoKeys,string memory _description, string[] memory _code, string[] memory _filenames,_URI,_branch) public returns(address){
-        GitXDC newContract = new GitXDC(_repoName, _totalRepoKeys, _description, _code, _filenames,_URI,_branch);
-        repos[totalRepos] = Repo(_repoName, _description,newContract);
-        emit createNewRepo(msg.sender, address(newContract));
-        return address(newContract);
-    }
-
-    function viewAllRepos() public view returns (Repo[] memory) {
-        Repo[] memory reposList = new Repo[](totalRepos);
-        for (uint i = 0; i < totalRepos; i++) {
-            reposList[i] = repos[i];
-        }
-        return reposList;
-    }
-}
-
-
-contract GitXDC is ERC1155 {
+contract XDRepository is ERC1155 {
     uint public versionCount = 0;
     string public branch = "MAIN";
     string public name;
@@ -99,7 +68,7 @@ contract GitXDC is ERC1155 {
         _;
     }
 
-    constructor(string memory _repoName,uint _totalRepoKeys,string memory _description, string[] memory _code, string[] memory _filenames,_URI,_branch) ERC1155(_URI) {
+    constructor(string memory _repoName,uint _totalRepoKeys,string memory _description, string[] memory _code, string[] memory _filenames,string memory _URI,uint _branch) ERC1155(_URI) {
         _mint(msg.sender, handlerToken,_totalRepoKeys, "");
 
         totalRepoKeys = _totalRepoKeys;
@@ -137,7 +106,7 @@ contract GitXDC is ERC1155 {
         for(uint i = 0; i < totalPullRequest; i++) {
             if(pull[i].repo == _repo && keccak256(abi.encodePacked(pull[i].title)) == keccak256(abi.encodePacked(_title))) {
 
-                (string[] memory code, string[] memory filenames) = GitXDC(_repo).cloneRepo(pull[i].version);
+                (string[] memory code, string[] memory filenames) = XDRepository(_repo).cloneRepo(pull[i].version);
                 
                 for(uint j = 0; j < code.length; j++) {
                     editRepo(code[j], filenames[j]);
@@ -182,7 +151,7 @@ contract GitXDC is ERC1155 {
         require(_branchName != "MAIN","you cant create a fork with the same branch name as MAIN");
         require(_branchName != branch,"you cant create a fork with the same branch name as the current fork");
 
-        GitXDC newContract = new GitXDC(_repoName, _totalRepoKeys, _description,repo[branch].versions[_version].code, repo[branch].versions[_version].filenames,_URI,_branchName);
+        XDRepository newContract = new XDRepository(_repoName, _totalRepoKeys, _description,repo[branch].versions[_version].code, repo[branch].versions[_version].filenames,_URI,_branchName);
 
         fork[totalBranches] = Branches(newContract,_repoName,_description);
         emit GitXDCContractCreated(msg.sender, address(newContract));
