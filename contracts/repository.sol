@@ -2,12 +2,12 @@
 pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
-/// @title XDRepository
+/// @title Repository
 /// @author R Quincy Jones
 /// @notice this is a repository stored on chain to version code
 /// @dev a free open source github alternative
 
-contract XDRepository is ERC1155 {
+contract Repository is ERC1155 {
     uint public versionCount = 0;
     string public branch = "MAIN";
     string public name;
@@ -106,7 +106,7 @@ contract XDRepository is ERC1155 {
         for(uint i = 0; i < totalPullRequest; i++) {
             if(pull[i].repo == _repo && keccak256(abi.encodePacked(pull[i].title)) == keccak256(abi.encodePacked(_title))) {
 
-                (string[] memory code, string[] memory filenames) = XDRepository(_repo).cloneRepo(pull[i].version);
+                (string[] memory code, string[] memory filenames) = Repository(_repo).cloneRepo(pull[i].version);
                 
                 for(uint j = 0; j < code.length; j++) {
                     editRepo(code[j], filenames[j]);
@@ -151,7 +151,7 @@ contract XDRepository is ERC1155 {
         require(_branchName != "MAIN","you cant create a fork with the same branch name as MAIN");
         require(_branchName != branch,"you cant create a fork with the same branch name as the current fork");
 
-        XDRepository newContract = new XDRepository(_repoName, _totalRepoKeys, _description,repo[branch].versions[_version].code, repo[branch].versions[_version].filenames,_URI,_branchName);
+        Repository newContract = new Repository(_repoName, _totalRepoKeys, _description,repo[branch].versions[_version].code, repo[branch].versions[_version].filenames,_URI,_branchName);
 
         fork[totalBranches] = Branches(newContract,_repoName,_description);
         emit GitXDCContractCreated(msg.sender, address(newContract));
