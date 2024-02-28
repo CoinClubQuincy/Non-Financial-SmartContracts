@@ -30,15 +30,17 @@ contract ManagerDeployer{
         singleContractABI = _singleContractABI;
     }
 
-    modifier singleDeployer(bytes _deployedSingleContractABI) {
-        if(singleDeployerActive == true){ require(singleContractABI == _deployedSingleContractABI, "this deployer can only deploy a single contract type");}
+    modifier singleDeployer(bytes memory _deployedSingleContractABI) {
+        if(singleDeployerActive == true){ 
+            require(keccak256(singleContractABI) == keccak256(_deployedSingleContractABI), "this deployer can only deploy a single contract type");
+        }
         _;
     }
 
     function createManager(string memory _name, string memory _description, bytes memory _contractByteCode, bytes memory _constructorArgs) public singleDeployer(_contractByteCode)  returns(address) {
         bytes memory bytecodeWithConstructorArgs = abi.encodePacked(_contractByteCode, _constructorArgs);
         address newContract = createChild(bytecodeWithConstructorArgs);
-        repos[totalContracts] = Repo(_name, _description, newContract);
+        repos[totalContracts] = Managers(_name, _description, newContract);
         emit createNewRepo(msg.sender, newContract);
         totalContracts++; 
         return newContract;
@@ -52,8 +54,8 @@ contract ManagerDeployer{
         return child;
     }
 
-    function viewAllContracts() public view returns (Repo[] memory) {
-        Repo[] memory reposList = new Repo[](totalContracts);
+    function viewAllContracts() public view returns (Managers[] memory) {
+        Managers[] memory reposList = new Managers[](totalContracts);
         for (uint i = 0; i < totalContracts; i++) {
             reposList[i] = repos[i];
         }
