@@ -42,10 +42,10 @@ contract InventoryManager is Client{
         return true;
     }
 
-    function redeemToken(uint _token) public returns(bool,uint){
+    function redeemToken(address _user,uint _token) public onlyClient returns(bool,uint){
         require(inventoryLedger[_token].isClaimed = false, "Token has been claimed already");
         inventoryLedger[_token].isClaimed = true;
-        safeTransferFrom(address(this), msg.sender,_token ,  1, "");
+        safeTransferFrom(address(this), _user,_token ,  1, "");
         return (inventoryLedger[_token].isClaimed,_token);
     }
 

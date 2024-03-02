@@ -1,0 +1,62 @@
+[
+    {
+        "name": "T-Shirt",
+        "description": "This is an XDC tshirt",
+        "image": "https://mywebsite.com/images/token1.png",
+        "attributes": [
+          {
+            "trait_type": "Rarity",
+            "value": "ETHDenver2024"
+          },
+          {
+            "trait_type": "Swag",
+            "value": 100
+          }
+        ]
+      },
+    {
+        "name": "Beanie",
+        "description": "This is an XDC hat",
+        "image": "https://mywebsite.com/images/token3.png",
+        "attributes": [
+        {
+            "trait_type": "Rarity",
+            "value": "ETHDenver2024"
+        },
+        {
+            "trait_type": "Swag",
+            "value": 100
+        }
+        ]
+    },
+    {
+        "name": "Socks",
+        "description": "This is an XDC socks",
+        "image": "https://mywebsite.com/images/token2.png",
+        "attributes": [
+        {
+            "trait_type": "Rarity",
+            "value": "ETHDenver2024"
+        },
+        {
+            "trait_type": "Swag",
+            "value": 100
+        }
+        ]
+    },
+    {
+        "name": "Hoodie",
+        "description": "This is an XDC hoodie",
+        "image": "https://mywebsite.com/images/token4.png",
+        "attributes": [
+        {
+            "trait_type": "Rarity",
+            "value": "ETHDenver2024"
+        },
+        {
+            "trait_type": "Swag",
+            "value": 100
+        }
+        ]
+    }
+]
