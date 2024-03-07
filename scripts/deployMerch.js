@@ -1,30 +1,20 @@
+// scripts/deploy.js
 const hre = require("hardhat");
 
 async function main() {
-  const contractName = "InventoryManager"; 
-  const [deployer] = await hre.ethers.getSigners();
+  // Compile our contract
+  await hre.run("compile");
 
-  const artifact = await hre.artifacts.readArtifact(contractName);
+  // Get the contract to deploy
+  const InventoryManager = await hre.ethers.getContractFactory("InventoryManager");
 
-  console.log("Bytecode of the contract:", artifact.bytecode);
+  // Start deployment, returning a promise that resolves to a contract object
+  const keys = 10; // replace with the number of keys you want to initialize
+  const adminAddress = "0x0000000000000000000000000000000000000000" // replace with the admin address
+  const URI = ""; 
+  const inventoryManager = await InventoryManager.deploy(keys, adminAddress, URI);
 
-  const adminURI =  "https://mywebsite.com/api/token/{tokenId}.json"
-  const clientURI = ""
-  const tokenURI = ""
-
-  console.log(
-    "Deploying contracts with the account:",
-    deployer.address
-  );
-
-  console.log("Account balance:", (await deployer.getBalance()).toString());
-
-  const Admin = await hre.ethers.getContractFactory("Admin");
-  const admin = await Admin.deploy("TestTokenization", "Test", 4, 3, artifact, adminURI);
-
-  await admin.deployed();
-
-  console.log("Admin deployed to:", admin.address);
+  console.log("Contract deployed to address:", inventoryManager.address);
 }
 
 main()

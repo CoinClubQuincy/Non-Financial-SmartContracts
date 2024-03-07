@@ -54,7 +54,6 @@ contract Repository is ERC1155 {
     struct Thread{
         string title;
         string description;
-        Comment[] comments;
     }
     struct Comment{
         address user;
@@ -68,17 +67,13 @@ contract Repository is ERC1155 {
         _;
     }
 
-    constructor(string memory _repoName,uint _totalRepoKeys,string memory _description, string[] memory _code, string[] memory _filenames,string memory _URI,uint _branch) ERC1155(_URI) {
+    constructor(string memory _repoName,uint _totalRepoKeys,string memory _description,string memory _URI,string memory _branch) ERC1155(_URI) {
         _mint(msg.sender, handlerToken,_totalRepoKeys, "");
 
         totalRepoKeys = _totalRepoKeys;
         name = _repoName;
         description = _description;
-
-        version[versionCount] = Versions(_code, _filenames, versionCount);
-        repo[branch] = Repo(_repoName, version[versionCount]);
         branch = _branch;
-        versionCount++;
     }
 
     function editRepo(string[] memory _code, string[] memory _filenames) public Handler returns(bool) {
@@ -113,7 +108,7 @@ contract Repository is ERC1155 {
                 }
             
                 emit comment(_title, _comments);
-                emit edit(block.timestamp, versionCount);
+                emit edit(block.timestamp,"merg pull request",versionCount);
                 return true;
             }
         }
@@ -122,7 +117,7 @@ contract Repository is ERC1155 {
     //trigger pull request
     function openPullRequest(string memory _title, string memory _description,uint _version,address _contract)external returns(bool){
         pull[totalPullRequest] = AllPullRequest(_contract,_title,_description,_version);
-        thread[totalThreads] = Thread("New Pull Request: " + _title ,_description);
+        thread[totalThreads] = Thread(string(abi.encodePacked("New Pull Request: " , _title)),_description);
 
         totalThreads++;
         totalPullRequest++;
@@ -147,13 +142,13 @@ contract Repository is ERC1155 {
         return branchesList;
     }
     //generates a new contract with version of code inside
-    function createFork(uint _version,string memory _branchName,string memory _repoName,uint _totalRepoKeys,string memory _description,_URI)public returns(bool){
+    function createFork(uint _version,string memory _branchName,string memory _repoName,uint _totalRepoKeys,string memory _description,string memory _URI)public returns(bool){
         require(_branchName != "MAIN","you cant create a fork with the same branch name as MAIN");
         require(_branchName != branch,"you cant create a fork with the same branch name as the current fork");
 
-        Repository newContract = new Repository(_repoName, _totalRepoKeys, _description,repo[branch].versions[_version].code, repo[branch].versions[_version].filenames,_URI,_branchName);
+        Repository newContract = new Repository(_repoName, _totalRepoKeys, _description,_URI,_branchName);
 
-        fork[totalBranches] = Branches(newContract,_repoName,_description);
+        fork[totalBranches] = Branches(address(newContract),_repoName,_description);
         emit GitXDCContractCreated(msg.sender, address(newContract));
         return true;
     }
