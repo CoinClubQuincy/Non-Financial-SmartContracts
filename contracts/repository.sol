@@ -8,6 +8,10 @@ import "./repository.sol";
 /// @dev a free open source github alternative
 
 contract RepositoryFactory {
+    address public homeContract;
+    constructor(address _homeContract){
+        homeContract = _homeContract;
+    }
     function createRepository(string memory _repoName, uint _totalRepoKeys, string memory _description, string memory _URI, string memory _branch) public returns (Repository) {
         return new Repository(_repoName, _totalRepoKeys, _description, _URI, _branch);
     }
@@ -83,7 +87,7 @@ contract Repository is ERC1155 {
         description = _description;
         branch = _branch;
 
-        factory = RepositoryFactory(msg.sender);
+        factory = RepositoryFactory(address(this));
     }
 
     function editRepo(string[] memory _code, string[] memory _filenames) public Handler returns(bool) {
