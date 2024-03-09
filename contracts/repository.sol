@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT License
 pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-
+import "./repository.sol";
 /// @title Repository
 /// @author R Quincy Jones
 /// @notice this is a repository stored on chain to version code
 /// @dev a free open source github alternative
+
+contract RepositoryFactory {
+    function createRepository(string memory _repoName, uint _totalRepoKeys, string memory _description, string memory _URI, string memory _branch) public returns (Repository) {
+        return new Repository(_repoName, _totalRepoKeys, _description, _URI, _branch);
+    }
+}
 
 contract Repository is ERC1155 {
     uint public versionCount = 0;
@@ -17,6 +23,8 @@ contract Repository is ERC1155 {
     uint public totalBranches = 0;
     uint public totalPullRequest = 0;
     uint public totalThreads = 0;
+
+    RepositoryFactory public factory;
 
     mapping(string => Repo) public repo;
     mapping(uint => Versions) public version;
@@ -74,6 +82,8 @@ contract Repository is ERC1155 {
         name = _repoName;
         description = _description;
         branch = _branch;
+
+        factory = RepositoryFactory(msg.sender);
     }
 
     function editRepo(string[] memory _code, string[] memory _filenames) public Handler returns(bool) {
@@ -103,10 +113,8 @@ contract Repository is ERC1155 {
 
                 (string[] memory code, string[] memory filenames) = Repository(_repo).cloneRepo(pull[i].version);
                 
-                for(uint j = 0; j < code.length; j++) {
-                    editRepo(code[j], filenames[j]);
-                }
-            
+                editRepo(code, filenames);
+
                 emit comment(_title, _comments);
                 emit edit(block.timestamp,"merg pull request",versionCount);
                 return true;
@@ -143,10 +151,15 @@ contract Repository is ERC1155 {
     }
     //generates a new contract with version of code inside
     function createFork(uint _version,string memory _branchName,string memory _repoName,uint _totalRepoKeys,string memory _description,string memory _URI)public returns(bool){
-        require(_branchName != "MAIN","you cant create a fork with the same branch name as MAIN");
-        require(_branchName != branch,"you cant create a fork with the same branch name as the current fork");
-
-        Repository newContract = new Repository(_repoName, _totalRepoKeys, _description,_URI,_branchName);
+        require(keccak256(abi.encodePacked(_branchName)) != keccak256(abi.encodePacked("MAIN")),"you cant create a fork with the same branch name as MAIN");
+        require(keccak256(abi.encodePacked(_branchName)) != keccak256(abi.encodePacked(branch)),"you cant create a fork with the same branch name as the current fork");
+        
+        Repository newContract;
+        for (uint i = 0; i < versionCount; i++) {
+            if (_version == i){
+                newContract = factory.createRepository(_repoName, _totalRepoKeys, _description, _URI, _branchName);
+            }
+        }
 
         fork[totalBranches] = Branches(address(newContract),_repoName,_description);
         emit GitXDCContractCreated(msg.sender, address(newContract));
