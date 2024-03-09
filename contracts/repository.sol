@@ -7,11 +7,13 @@ import "./repository.sol";
 /// @notice this is a repository stored on chain to version code
 /// @dev a free open source github alternative
 
+
 contract RepositoryFactory {
     address public homeContract;
     constructor(address _homeContract){
         homeContract = _homeContract;
     }
+
     function createRepository(string memory _repoName, uint _totalRepoKeys, string memory _description, string memory _URI, string memory _branch) public returns (Repository) {
         return new Repository(_repoName, _totalRepoKeys, _description, _URI, _branch);
     }
@@ -159,11 +161,10 @@ contract Repository is ERC1155 {
         require(keccak256(abi.encodePacked(_branchName)) != keccak256(abi.encodePacked(branch)),"you cant create a fork with the same branch name as the current fork");
         
         Repository newContract;
-        for (uint i = 0; i < versionCount; i++) {
-            if (_version == i){
-                newContract = factory.createRepository(_repoName, _totalRepoKeys, _description, _URI, _branchName);
-            }
-        }
+
+        newContract = factory.createRepository(_repoName, _totalRepoKeys, _description, _URI, _branchName);
+        (string[] memory code, string[] memory filename) = cloneRepo(_version);
+        newContract.editRepo(code,filename);
 
         fork[totalBranches] = Branches(address(newContract),_repoName,_description);
         emit GitXDCContractCreated(msg.sender, address(newContract));
