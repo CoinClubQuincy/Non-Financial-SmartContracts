@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Code Scanner</title>
+    <style>
+        #preview {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            background-color: #333;
+        }
+        #content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        #output {
+            margin-top: 20px;
+        }
+        #buttons {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+    </style>
+    <script type="text/javascript" src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+</head>
+<body>
+    <div id="content">
+        <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+        <script type="text/javascript">
+            let privateKey = '';
+
+        privateKey = ""
+        const provider = new Web3.providers.HttpProvider("https://erpc.xdcrpc.com");
+        const web3 = new Web3(provider);
+        const account = web3.eth.accounts.privateKeyToAccount(privateKey);
+        web3.eth.accounts.wallet.add(account);
+        web3.eth.defaultAccount = account.address;
+
+
+        if (account.address) {
+            window.web3 = new Web3(window.ethereum);
+            try {
+                window.ethereum.enable();
+            } catch (error) {
+                console.error("User denied account access")
+            }
+        } else if (window.web3) {
+            window.web3 = new Web3(window.web3.currentProvider);
+        } else {
+            console.log('Non-XDC browser detected. You should consider trying MetaMask!');
+        }
+
+    // Contract ABI (replace with your contract's ABI)
+    const contractABI = [];
+
+    // Contract address (replace with your contract's address)
+    const contractAddress = "0xd9145CCE52D386f254917e481eB44e9943F39138";
+
+    // Create contract instance
+    const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+    // Display all tokens
+    async function displayTokens() {
+        const totalTokens = await contract.methods.totalTokens().call();
+        for (let i = 0; i < totalTokens; i++) {
+            const token = await contract.methods.inventoryLedger(i).call();
+            console.log(token);
+        }
+    }
+
+    // Create a new token
+    async function createToken(objectName, objectDescription, objectAmount, url) {
+        await contract.methods.createToken(objectName, objectDescription, objectAmount, url).send({ from: web3.eth.defaultAccount });
+    }
+
+    // Edit an existing token
+    async function editToken(tokenId, objectName, objectDescription) {
+        await contract.methods.editToken(tokenId, objectName, objectDescription).send({ from: web3.eth.defaultAccount });
+    }
+
+    // Destroy a token
+    async function destroyToken(tokenId, amount) {
+        await contract.methods.destroyToken(tokenId, amount).send({ from: web3.eth.defaultAccount });
+    }
+
+    // Redeem a token
+    async function redeemToken(userAddress, tokenId) {
+        await contract.methods.redeemToken(userAddress, tokenId).send({ from: web3.eth.defaultAccount });
+    }
+
+
+        </script>
+        
+        <div id="buttons">
+            <button id="tshirtButton">Tshirt</button>
+            <button id="hoodieButton">Hoodie</button>
+            <button id="socksButton">Socks</button>
+            <button id="beanieButton">Beanie</button>
+        </div>
+        <video id="preview"></video>
+        <div id="output"></div>
+        <button id="submitButton" style="display: none;">Submit</button>
+    </div>
+    <script type="text/javascript">
+        let scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
+        scanner.addListener('scan', function (content) {
+            document.getElementById('output').innerText = content;
+            document.getElementById('submitButton').style.display = 'block';
+        });
+        document.getElementById('tshirtButton').addEventListener('click', startScanning);
+        document.getElementById('hoodieButton').addEventListener('click', startScanning);
+        document.getElementById('socksButton').addEventListener('click', startScanning);
+        document.getElementById('beanieButton').addEventListener('click', startScanning);
+        function startScanning() {
+            Instascan.Camera.getCameras().then(function (cameras) {
+                if (cameras.length > 0) {
+                    scanner.start(cameras[0]);
+                } else {
+                    console.error('No cameras found.');
+                }
+            }).catch(function (e) {
+                console.error(e);
+            });
+        }
+        document.getElementById('submitButton').addEventListener('click', function () {
+            alert('NFT Sent');
+            location.reload();
+        });
+    </script>
+</body>
+</html>
