@@ -69,6 +69,24 @@ contract Tournament is Scoreboard{
                 bracketName = string(abi.encodePacked(bracketName,"-",bracketName));
             }
 
+            Games memory newGame = Games({
+                gameName: string(abi.encodePacked("Game-",i)),
+                teams: new Teams[](0),
+                isGameStarted: false,
+                exist: true,
+                winCondition: 0,
+                winner: Teams({
+                    teamName: "No Winner",
+                    teamData: ScoreData({
+                        score: 0,
+                        time: block.timestamp,
+                        exist: true
+                    }),
+                    exist: true
+                }),
+                isOver: false
+            });
+
             Bracket memory newBracket = Bracket({
                 tournamentNumber: _tournamentNumber,
                 bracketName: bracketName,
