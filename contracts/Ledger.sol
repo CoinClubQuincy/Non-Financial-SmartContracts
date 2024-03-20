@@ -10,7 +10,7 @@ abstract contract Ledger{
     uint totalMoves = 0;
     Moves[] moves;
     address[] teams;
-    uint public maxTeams = 2;
+    uint public maxTeams;
     bool public multipleMoves;
 
     mapping(uint => Moves) public move;
@@ -24,16 +24,10 @@ abstract contract Ledger{
     constructor(address[] memory _totalTeams, bool _multipleMoves) {
         require(_totalTeams.length > 0, "No teams have been added");
         require(_totalTeams.length == maxTeams, "Only two teams are allowed");
+
         teams = _totalTeams;
         multipleMoves = _multipleMoves;
-
-    }
-
-    modifier toggleTeamTurn(address _teamName){
-        require(_teamName == teams[0] || _teamName == teams[1], "Team not authorized");
-        require(maxTeams < teams.length, "not enough teams");
-        require(multipleMoves == true && keccak256(abi.encodePacked(move[totalMoves - 1].team)) == keccak256(abi.encodePacked(_teamName)), "It is not your turn");
-        _;
+        maxTeams = _totalTeams.length;
     }
 
     function getAllMoves() public view returns (Moves[] memory) {
@@ -44,8 +38,21 @@ abstract contract Ledger{
         return allMoves;
     }
 
-    function makeMove(string memory _move) public virtual toggleTeamTurn(msg.sender) returns(bool){
+    function teamMoveOrder(uint _currentMove) public view returns (address) {
+        require(_currentMove <= totalMoves, "No moves have been made");
+        address teamsTurn;
+        for(uint i = 0; i < _currentMove; i++){
+            if(i > maxTeams){
+                i = 0;
+            }
+            teamsTurn = teams[i];
+        }
+        return teamsTurn;
+    }
+
+    function makeMove(string memory _move) public virtual returns(bool){
         require(bytes(_move).length > 0, "Move cannot be empty");
+        require(teamMoveOrder(totalMoves) == msg.sender, "It is not your turn");
 
         Moves memory newMove = Moves({
             team: msg.sender,
