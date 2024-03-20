@@ -40,10 +40,10 @@ abstract contract Ledger{
         require(_currentMove <= totalMoves, "No moves have been made");
         address teamsTurn;
         for(uint i = 0; i <= _currentMove; i++){
-            if(i > maxTeams - 1){
+            teamsTurn = teams[i];
+            if(i >= maxTeams){
                 i = 0;
             }
-            teamsTurn = teams[i];
         }
         return teamsTurn;
     }
