@@ -7,9 +7,9 @@ import "./KeyManager.sol";
 /// @notice this is a contract that keeps track of each move in a game
 
 abstract contract Ledger{
-    uint totalMoves = 0;
     Moves[] moves;
     address[] teams;
+    uint public totalMoves = 0;
     uint public maxTeams;
     bool public multipleMoves;
 
@@ -23,8 +23,6 @@ abstract contract Ledger{
 
     constructor(address[] memory _totalTeams, bool _multipleMoves) {
         require(_totalTeams.length > 0, "No teams have been added");
-        require(_totalTeams.length == maxTeams, "Only two teams are allowed");
-
         teams = _totalTeams;
         multipleMoves = _multipleMoves;
         maxTeams = _totalTeams.length;
@@ -41,8 +39,8 @@ abstract contract Ledger{
     function teamMoveOrder(uint _currentMove) public view returns (address) {
         require(_currentMove <= totalMoves, "No moves have been made");
         address teamsTurn;
-        for(uint i = 0; i < _currentMove; i++){
-            if(i > maxTeams){
+        for(uint i = 0; i <= _currentMove; i++){
+            if(i > maxTeams - 1){
                 i = 0;
             }
             teamsTurn = teams[i];
