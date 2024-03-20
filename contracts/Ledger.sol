@@ -6,12 +6,13 @@ import "./KeyManager.sol";
 /// @author R Quincy Jones
 /// @notice this is a contract that keeps track of each move in a game
 
-abstract contract Ledger{
+contract Ledger{
     Moves[] moves;
     address[] teams;
     uint public totalMoves = 0;
     uint public maxTeams;
-    bool public multipleMoves;
+
+    event moveStatus(address _team,string _move,string _msg);
 
     mapping(uint => Moves) public move;
     struct Moves{
@@ -20,11 +21,10 @@ abstract contract Ledger{
         uint time;
         bool exist;
     }
-
-    constructor(address[] memory _totalTeams, bool _multipleMoves) {
+    
+    constructor(address[] memory _totalTeams) {
         require(_totalTeams.length > 0, "No teams have been added");
         teams = _totalTeams;
-        multipleMoves = _multipleMoves;
         maxTeams = _totalTeams.length;
     }
 
@@ -51,6 +51,7 @@ abstract contract Ledger{
     function makeMove(string memory _move) public virtual returns(bool){
         require(bytes(_move).length > 0, "Move cannot be empty");
         require(teamMoveOrder(totalMoves) == msg.sender, "It is not your turn");
+        emit moveStatus(msg.sender,_move,"Move has been made");
 
         Moves memory newMove = Moves({
             team: msg.sender,
@@ -58,7 +59,7 @@ abstract contract Ledger{
             time: block.timestamp,
             exist: true
         });
-
+        
         move[totalMoves] = newMove;
         totalMoves++;
         return true;
