@@ -11,6 +11,7 @@ abstract contract Ledger{
     Moves[] moves;
     address[] teams;
     uint public maxTeams = 2;
+    bool public multipleMoves;
 
     mapping(uint => Moves) public move;
     struct Moves{
@@ -20,17 +21,18 @@ abstract contract Ledger{
         bool exist;
     }
 
-    constructor(address[] memory _totalTeams) {
+    constructor(address[] memory _totalTeams, bool _multipleMoves) {
         require(_totalTeams.length > 0, "No teams have been added");
         require(_totalTeams.length == maxTeams, "Only two teams are allowed");
         teams = _totalTeams;
+        multipleMoves = _multipleMoves;
+
     }
 
     modifier toggleTeamTurn(address _teamName){
         require(_teamName == teams[0] || _teamName == teams[1], "Team not authorized");
-        require(teams.length > 0, "No teams have been added");
-        require(maxTeams < teams.length, "All teams have made a move");
-        require(keccak256(abi.encodePacked(move[totalMoves - 1].team)) == keccak256(abi.encodePacked(_teamName)), "It is not your turn");
+        require(maxTeams < teams.length, "not enough teams");
+        require(multipleMoves == true && keccak256(abi.encodePacked(move[totalMoves - 1].team)) == keccak256(abi.encodePacked(_teamName)), "It is not your turn");
         _;
     }
 
