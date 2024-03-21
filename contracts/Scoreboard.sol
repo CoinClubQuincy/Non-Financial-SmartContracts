@@ -11,7 +11,7 @@ contract Scoreboard{
     uint public gameCounter = 0;
     string public scoreboard = "Default";
 
-    mapping(string => Teams) public team;
+    mapping(address => Teams) public team;
     mapping(string => Games) public games;
     mapping(uint => Games) public gameList;
 
@@ -28,6 +28,7 @@ contract Scoreboard{
 
     struct Teams{
         string teamName;
+        address teamAddress;
         ScoreData teamData;
         bool exist;
     }
@@ -53,6 +54,7 @@ contract Scoreboard{
             winCondition: _winCondition,
             winner: Teams({
                 teamName: "No Winner",
+                teamAddress: address(0),
                 teamData: ScoreData({
                     score: 0,
                     time: block.timestamp,
@@ -71,9 +73,10 @@ contract Scoreboard{
     }
 
     function createTeam(string memory _gameName,string memory _teamName) internal virtual gameStarted(_gameName) returns(bool){
-        require(team[_teamName].exist == false, "Team already exist");
-        team[_teamName] = Teams({
+        require(team[msg.sender].exist == false, "Team already exist");
+        team[msg.sender] = Teams({
             teamName: _teamName,
+            teamAddress: msg.sender,
             teamData: ScoreData({
                 score: 0,
                 time: block.timestamp,
@@ -82,7 +85,7 @@ contract Scoreboard{
             exist: true
         });
 
-        games[_gameName].teams.push(team[_teamName]);
+        games[_gameName].teams.push(team[msg.sender]);
         emit gameStatus(_gameName, _teamName,"Team has been created");
         return true;
     }
@@ -93,15 +96,15 @@ contract Scoreboard{
         return true;
     }
 
-    function score(string memory _gameName,string memory _teamName,uint _score,bool _allocation) internal virtual gameStarted(_gameName) returns(bool){
-        require(team[_teamName].exist == true, "Team does not exist");
+    function score(string memory _gameName,uint _score,bool _allocation) internal virtual gameStarted(_gameName) returns(bool){
+        require(team[msg.sender].exist == true, "Team does not exist");
         if (_allocation == true) {
-            team[_teamName].teamData.score += _score;
-            isOver(_teamName);
-            emit gameStatus(_gameName,_teamName,"Team Scored");
+            team[msg.sender].teamData.score += _score;
+            isOver(msg.sender);
+            emit gameStatus(_gameName,team[msg.sender].teamName,"Team Scored");
         } else {
-            team[_teamName].teamData.score -= _score;
-            emit gameStatus(_gameName,_teamName,"Team loss points");
+            team[msg.sender].teamData.score -= _score;
+            emit gameStatus(_gameName,team[msg.sender].teamName,"Team loss points");
         }
         return true;
     }
@@ -122,20 +125,20 @@ contract Scoreboard{
         return games[_gameName].teams;
     }
 
-    function isOver(string memory _teamName) internal {
-        if(team[_teamName].teamData.score == games[scoreboard].winCondition){
+    function isOver(address _team) internal {
+        if(team[_team].teamData.score == games[scoreboard].winCondition){
             games[scoreboard].isOver = true;
-            games[scoreboard].winner = team[_teamName];
+            games[scoreboard].winner = team[_team];
         }
     }
 
-    function defaultWinner(string memory _gameName,string memory _teamName) internal virtual gameStarted(_gameName) returns(bool){
+    function defaultWinner(string memory _gameName,address _team) internal virtual gameStarted(_gameName) returns(bool){
         require(games[_gameName].isOver == false, "Game is already over");
         require(games[_gameName].exist == true, "Game does not exist");
-        require(team[_teamName].exist == true, "Team does not exist");
+        require(team[_team].exist == true, "Team does not exist");
 
         games[_gameName].isOver = true;
-        games[_gameName].winner = team[_teamName];
+        games[_gameName].winner = team[_team];
         return true;
     }
 }
