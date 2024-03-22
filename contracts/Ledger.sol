@@ -4,7 +4,7 @@ import "./KeyManager.sol";
 
 /// @title Ledger
 /// @author R Quincy Jones
-/// @notice this is a contract that keeps track of each move in a game
+/// @notice this is a Library that keeps track of each move in a game
 
 contract Ledger{
     Moves[] moves;

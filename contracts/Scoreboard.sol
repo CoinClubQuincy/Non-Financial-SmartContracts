@@ -121,10 +121,6 @@ contract Scoreboard{
         return games[_gameName];
     }
 
-    function viewAllTeams(string memory _gameName) public view returns(Teams[] memory){
-        return games[_gameName].teams;
-    }
-
     function isOver(address _team) internal {
         if(team[_team].teamData.score == games[scoreboard].winCondition){
             games[scoreboard].isOver = true;

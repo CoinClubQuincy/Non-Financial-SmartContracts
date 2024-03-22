@@ -61,9 +61,9 @@ contract Admin is ERC1155{
 /// @dev a free open source key manager
 
 contract Client is ERC1155{
-    uint clientToken;
-    Admin adminAddress;
-    bool isHandler;
+    uint public clientToken;
+    Admin public adminAddress;
+    bool public isHandler;
 
     constructor(uint _keys,address _adminAddress,bool _isHandler ,string memory _URI)ERC1155(_URI) {
         if(_isHandler == false){ require(Admin(_adminAddress).isAdminContract(), "Provided address is not an Admin contract"); }
