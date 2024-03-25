@@ -7,17 +7,20 @@ import "./Scoreboard.sol";
 /// @notice this is a contract that keeps track of a Tournament bracket
 /// @dev a free open source game counter
 
-contract Tournament is Scoreboard{
-    uint public roundCounter = 0;
+abstract contract Tournament is Scoreboard,Client{
+    uint public tournamentCounter = 0;
 
     mapping(uint => TournamentData) public tournament;
-    mapping(string => TournamentData) public tournamentName;
     mapping(uint => Bracket) public bracket;
     mapping(uint => Ratings) public ratings;
+
+    event tournamentStatus(string _tournamentName,string status,string _msg);
+    event teamClaimed(string _teamName,address _teamAddress,string _msg);
 
     struct TournamentData{
         string tournamentName;
         Bracket[] brackets;
+        Ratings[] ratings;
         bool exist;
     }
 
@@ -41,60 +44,126 @@ contract Tournament is Scoreboard{
         _;
     }
 
-    constructor(string memory _tournamentName,uint _totalKeys,string memory _URI) Scoreboard(_tournamentName,_totalKeys,_URI){}
+    constructor(uint _totalKeys,string memory _URI) Scoreboard() Client(_totalKeys,address(0),true,_URI){}
 
-    function createTournament(string memory _tournamentName) public onlyClient() returns(bool){
-        require(tournament[roundCounter].exist == false, "Tournament already exists");
+    function createTournament(string memory _tournamentName,uint _totalPlayers) public onlyClient() returns(bool){
+        require(tournament[tournamentCounter].exist == false, "Tournament already exists");
+        
+        (Bracket[] memory _bracket, Ratings[] memory _ratings) = createBrackets(tournamentCounter, _totalPlayers);
+        
         TournamentData memory newTournament = TournamentData({
             tournamentName: _tournamentName,
-            brackets: new Bracket[](0),
+            brackets: _bracket,
+            ratings: _ratings,
             exist: true
         });
 
-        tournament[roundCounter] = newTournament;
-        tournamentName[_tournamentName] = newTournament;
+        tournament[tournamentCounter] = newTournament;
+        tournamentCounter++;
+        emit tournamentStatus(_tournamentName,"Tournament Created","Tournament has been created");
         return true;
     }
-
-    function creeateBrackets(uint _tournamentNumber,uint _totalPlayers,uint _totalBrackets) internal onlyClient() returns(bool){
+    function assignTeams(uint _tournamentNumber,uint _bracketNumber) public onlyClient() returns(bool){
         require(tournament[_tournamentNumber].exist == true, "Tournament does not exist");
-        require(bracket[_tournamentNumber].exist == false, "Bracket already exists");
-        require(_totalPlayers >= 8, "Not enough players");
+        require(tournament[_tournamentNumber].brackets[_bracketNumber].exist == true, "Bracket does not exist");
 
-        //generate rounds for bracket
-        uint rounds = 0;
-        for(uint i = 1; i < _totalPlayers; i++){
-            (string memory bracketName,uint bracketNumb) = finalNaming(i);
-            if(bracketNumb > 3){
-                bracketName = string(abi.encodePacked(bracketName,"-",bracketName));
+
+
+
+    }
+
+    function claimTeam(uint _tournamentNumber,string memory _teamName) public returns(bool){
+        require(tournament[_tournamentNumber].exist == true, "Tournament does not exist");
+        
+        for(uint i = 0; i < tournament[_tournamentNumber].ratings.length; i++){
+            if(tournament[_tournamentNumber].ratings[0].team.teamAddress == address(0)){
+                tournament[_tournamentNumber].ratings[0].team.teamName = _teamName;
+                tournament[_tournamentNumber].ratings[0].team.teamAddress = msg.sender;
+                emit teamClaimed(_teamName,msg.sender,"Team has been claimed");
+                return true;
             }
+        }
+        emit teamClaimed(_teamName,msg.sender,"Team unable to be claimed");
+        return false;
+    }
 
-            Games memory newGame = Games({
-                gameName: string(abi.encodePacked("Game-",i)),
-                teams: new Teams[](0),
-                isGameStarted: false,
-                exist: true,
-                winCondition: 0,
-                winner: Teams({
-                    teamName: "No Winner",
-                    teamData: ScoreData({
-                        score: 0,
-                        time: block.timestamp,
-                        exist: true
-                    }),
+    function createBrackets(uint _tournamentNumber,uint _totalPlayers) internal returns(Bracket[] memory, Ratings[] memory){
+        require(tournament[_tournamentNumber].exist == true, "Tournament does not exist");
+        require(_totalPlayers > 0, "No players to create brackets");
+
+        //generate Teams and Ratings
+        Teams[] memory _teams = new Teams[](_totalPlayers);
+        Ratings[] memory _ratings = new Ratings[](_totalPlayers);
+        Bracket[] memory _brackets = new Bracket[](_totalPlayers);
+
+        if(_totalPlayers % 2 != 0){     _totalPlayers++;    }   //if odd number of players, add one to make it even
+
+        for(uint i = 0; i <= _totalPlayers; i++){
+            Teams memory newTeam = Teams({
+                teamName: string("Unclaimed Team"),
+                teamAddress: address(0),
+                teamData: ScoreData({
+                    score: 0,
+                    time: block.timestamp,
                     exist: true
                 }),
-                isOver: false
+                exist: true
             });
+            _teams[i] = newTeam;
+
+            Ratings memory newRating = Ratings({
+                team: _teams[i],
+                rating: 500,
+                exist: true
+            });
+
+            ratings[i] = newRating;
+        }
+
+        uint bracketCount = 0;
+
+        while (_totalPlayers > 2) {
+            _totalPlayers = _totalPlayers / 2;
+            bracketCount++;
+        }
+
+        string memory bracketName = finalNaming(0);
+        
+        for(uint bracks = 0; bracks <= bracketCount;bracks++){
+            Games[] memory _games = new Games[]((bracks+1)*2);
+
+            for (uint ngames=0; ngames <= (bracks+1)*2; ngames++){
+                Games memory newGame = Games({
+                    gameName: string(abi.encodePacked("Game-",ngames)),
+                    teams: new Teams[](2),
+                    isGameStarted: false,
+                    exist: true,
+                    winCondition: 0,
+                    winner: Teams({
+                        teamName: "No Winner",
+                        teamAddress: address(0),
+                        teamData: ScoreData({
+                            score: 0,
+                            time: block.timestamp,
+                            exist: true
+                        }),
+                        exist: true
+                    }),
+                    isOver: false
+                });
+                _games[ngames] = newGame;
+                bracks++;
+            }
 
             Bracket memory newBracket = Bracket({
                 tournamentNumber: _tournamentNumber,
                 bracketName: bracketName,
-                games: new Games[](0),
+                games: _games,
                 isRoundStarted: false,
                 exist: true,
                 winner: Teams({
                     teamName: "No Winner",
+                    teamAddress: address(0),
                     teamData: ScoreData({
                         score: 0,
                         time: block.timestamp,
@@ -103,16 +172,14 @@ contract Tournament is Scoreboard{
                     exist: true
                 })
             });
-
-            tournament[_tournamentNumber].brackets.push(newBracket);
+            _brackets[bracks] = newBracket;
         }
-
-        return true;
+        return (_brackets,_ratings);
     }
 
     function viewAllTournaments() public view returns(TournamentData[] memory){
-        TournamentData[] memory allTournaments = new TournamentData[](roundCounter);
-        for(uint i = 0; i < roundCounter; i++){
+        TournamentData[] memory allTournaments = new TournamentData[](tournamentCounter);
+        for(uint i = 0; i < tournamentCounter; i++){
             allTournaments[i] = tournament[i];
         }
         return allTournaments;
@@ -122,14 +189,25 @@ contract Tournament is Scoreboard{
         return tournament[_tournamentNumber];
     }
 
-    function finalNaming(uint _bracketNumber) internal pure returns(string memory,uint){
+    function finalNaming(uint _bracketNumber) internal pure returns(string memory){
         if(_bracketNumber == 1){
-            return ("Finals",_bracketNumber);
+            return ("Finals");
         } else if(_bracketNumber == 2){
-            return ("Semi-Finals",_bracketNumber);
+            return ("Semi-Finals");
         } else if(_bracketNumber == 3){
-            return ("Quarter-Finals",_bracketNumber);
+            return ("Quarter-Finals");
         }
-        return ("Bracket",_bracketNumber);
+        return string(abi.encodePacked("Bracket","-",_bracketNumber));
+    }
+
+    function updateRating(uint winnerRating, uint loserRating) public pure returns (uint, uint) {
+        uint K = 32;
+        uint expectedWinner = 1 / (1 + 10 ** ((loserRating - winnerRating) / 400));
+        uint expectedLoser = 1 / (1 + 10 ** ((winnerRating - loserRating) / 400));
+        
+        uint newWinnerRating = winnerRating + K * (1 - expectedWinner);
+        uint newLoserRating = loserRating + K * (0 - expectedLoser);
+        
+        return (newWinnerRating, newLoserRating);
     }
 }
