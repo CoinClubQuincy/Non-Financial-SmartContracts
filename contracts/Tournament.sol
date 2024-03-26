@@ -63,13 +63,45 @@ abstract contract Tournament is Scoreboard,Client{
         emit tournamentStatus(_tournamentName,"Tournament Created","Tournament has been created");
         return true;
     }
-    function assignTeams(uint _tournamentNumber,uint _bracketNumber) public onlyClient() returns(bool){
+    function assignTeams(uint _tournamentNumber,uint _bracketNumber) public view onlyClient() returns(bool){
         require(tournament[_tournamentNumber].exist == true, "Tournament does not exist");
         require(tournament[_tournamentNumber].brackets[_bracketNumber].exist == true, "Bracket does not exist");
 
+        Ratings[] memory _ratings = new Ratings[](tournament[_tournamentNumber].ratings.length);
+        Games[] memory _games = new Games[](tournament[_tournamentNumber].brackets[_bracketNumber].games.length);
+        Ratings[] memory _sortedRatings = sortRatings(tournament[_tournamentNumber].ratings);
 
+        for(uint rates=0;rates <= tournament[_tournamentNumber].ratings.length ;rates++){
+            _ratings[rates] = tournament[_tournamentNumber].ratings[rates];
+        }
 
+        for(uint i =0; i <= bracket[_bracketNumber].games.length; i++){
+            _games[i] = bracket[_bracketNumber].games[i];
+        }
+        return true;
+    }
 
+    function isInArray(uint[] memory array, uint value) public pure returns(bool) {
+        for(uint i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function sortRatings(Ratings[] memory _rating) public pure returns(Ratings[] memory){
+        uint n = _rating.length;
+        for (uint i = 0; i < n-1; i++){
+            for (uint j = 0; j < n-i-1; j++){
+                if (_rating[j].rating < _rating[j+1].rating){
+                    Ratings memory temp = _rating[j];
+                    _rating[j] = _rating[j+1];
+                    _rating[j+1] = temp;
+                }
+            }
+        }
+        return _rating;
     }
 
     function claimTeam(uint _tournamentNumber,string memory _teamName) public returns(bool){
