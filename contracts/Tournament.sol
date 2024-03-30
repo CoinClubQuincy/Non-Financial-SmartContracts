@@ -48,6 +48,7 @@ abstract contract Tournament is Scoreboard,Client{
 
     function createTournament(string memory _tournamentName,uint _totalPlayers) public onlyClient() returns(bool){
         require(tournament[tournamentCounter].exist == false, "Tournament already exists");
+        require(_totalPlayers % 2 == 0, "player must be even number");
         
         (Bracket[] memory _bracket, Ratings[] memory _ratings) = createBrackets(tournamentCounter, _totalPlayers);
         
@@ -63,22 +64,57 @@ abstract contract Tournament is Scoreboard,Client{
         emit tournamentStatus(_tournamentName,"Tournament Created","Tournament has been created");
         return true;
     }
-    function assignTeams(uint _tournamentNumber,uint _bracketNumber) public view onlyClient() returns(bool){
+    function assignTeams(uint _tournamentNumber,uint _bracketNumber) public onlyClient() returns(bool){
         require(tournament[_tournamentNumber].exist == true, "Tournament does not exist");
         require(tournament[_tournamentNumber].brackets[_bracketNumber].exist == true, "Bracket does not exist");
+        require(tournament[_tournamentNumber].ratings.length > 0, "No ratings to assign");
 
-        Ratings[] memory _ratings = new Ratings[](tournament[_tournamentNumber].ratings.length);
-        Games[] memory _games = new Games[](tournament[_tournamentNumber].brackets[_bracketNumber].games.length);
         Ratings[] memory _sortedRatings = sortRatings(tournament[_tournamentNumber].ratings);
-
-        for(uint rates=0;rates <= tournament[_tournamentNumber].ratings.length ;rates++){
-            _ratings[rates] = tournament[_tournamentNumber].ratings[rates];
-        }
-
-        for(uint i =0; i <= bracket[_bracketNumber].games.length; i++){
-            _games[i] = bracket[_bracketNumber].games[i];
+        
+        uint teamsCount = 0;
+        for(uint _gameSort =0; _gameSort <= bracket[_bracketNumber].games.length; _gameSort++){
+            tournament[_tournamentNumber].brackets[_bracketNumber].games[_gameSort].teams[teamsCount] = _sortedRatings[_gameSort].team;
+            tournament[_tournamentNumber].brackets[_bracketNumber].games[_gameSort].teams[teamsCount] = _sortedRatings[bracket[_bracketNumber].games.length - teamsCount].team;
+            teamsCount++;
         }
         return true;
+    }
+
+    function finalizeBracketStandings(uint _tournamentNumber,uint _bracketNumber) public onlyClient() returns(bool){
+        require(tournament[_tournamentNumber].exist == true, "Tournament does not exist");
+        require(tournament[_tournamentNumber].brackets[_bracketNumber].exist == true, "Bracket does not exist");
+        require(tournament[_tournamentNumber].brackets[_bracketNumber].games.length > 0, "No games to finalize");
+
+        for(uint i = 0; i < tournament[_tournamentNumber].brackets[_bracketNumber].games.length; i++){
+            address player = tournament[_tournamentNumber].brackets[_bracketNumber].games[i].winner.teamAddress;
+            if(player != address(0)){
+                Ratings memory winnerRating = findRating(_tournamentNumber, player);
+            }
+        }
+        return true;
+    }
+
+    function findRating(uint _tournamentNumber,address _teamAddress) public view returns(Ratings memory){
+        require(tournament[_tournamentNumber].exist == true, "Tournament does not exist");
+        for(uint i = 0; i < tournament[_tournamentNumber].ratings.length; i++){
+            if(tournament[_tournamentNumber].ratings[i].team.teamAddress == _teamAddress){
+                return tournament[_tournamentNumber].ratings[i];
+            }
+        }
+        return Ratings({
+            team: Teams({
+                teamName: "No Team Exists",
+                teamAddress: address(0),
+                teamData: ScoreData({
+                    score: 0,
+                    time: 0,
+                    exist: false
+                }),
+                exist: false
+            }),
+            rating: 0,
+            exist: false
+        });
     }
 
     function isInArray(uint[] memory array, uint value) public pure returns(bool) {
