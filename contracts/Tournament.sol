@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT License
 pragma solidity ^0.8.9;
 import "./Scoreboard.sol";
+import "./TournamentTools.sol";
+import "./KeyManager.sol";
 
 /// @title Tournament
 /// @author R Quincy Jones
 /// @notice this is a contract that keeps track of a Tournament bracket
 /// @dev a free open source game counter
 
-abstract contract Tournament is Scoreboard,Client{
+contract Tournament is Scoreboard,Client,TournamentTools{
     uint public tournamentCounter = 0;
 
     mapping(uint => TournamentData) public tournament;
@@ -89,6 +91,7 @@ abstract contract Tournament is Scoreboard,Client{
             address player = tournament[_tournamentNumber].brackets[_bracketNumber].games[i].winner.teamAddress;
             if(player != address(0)){
                 Ratings memory winnerRating = findRating(_tournamentNumber, player);
+                updateRating(winnerRating.rating, winnerRating.rating + 100);
             }
         }
         return true;
@@ -115,15 +118,6 @@ abstract contract Tournament is Scoreboard,Client{
             rating: 0,
             exist: false
         });
-    }
-
-    function isInArray(uint[] memory array, uint value) public pure returns(bool) {
-        for(uint i = 0; i < array.length; i++) {
-            if (array[i] == value) {
-                return true;
-            }
-        }
-        return false;
     }
 
     function sortRatings(Ratings[] memory _rating) public pure returns(Ratings[] memory){
@@ -255,27 +249,5 @@ abstract contract Tournament is Scoreboard,Client{
 
     function tournamentDetails(uint _tournamentNumber) public view returns(TournamentData memory){
         return tournament[_tournamentNumber];
-    }
-
-    function finalNaming(uint _bracketNumber) internal pure returns(string memory){
-        if(_bracketNumber == 1){
-            return ("Finals");
-        } else if(_bracketNumber == 2){
-            return ("Semi-Finals");
-        } else if(_bracketNumber == 3){
-            return ("Quarter-Finals");
-        }
-        return string(abi.encodePacked("Bracket","-",_bracketNumber));
-    }
-
-    function updateRating(uint winnerRating, uint loserRating) public pure returns (uint, uint) {
-        uint K = 32;
-        uint expectedWinner = 1 / (1 + 10 ** ((loserRating - winnerRating) / 400));
-        uint expectedLoser = 1 / (1 + 10 ** ((winnerRating - loserRating) / 400));
-        
-        uint newWinnerRating = winnerRating + K * (1 - expectedWinner);
-        uint newLoserRating = loserRating + K * (0 - expectedLoser);
-        
-        return (newWinnerRating, newLoserRating);
     }
 }
