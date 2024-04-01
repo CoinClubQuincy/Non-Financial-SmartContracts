@@ -7,7 +7,15 @@ pragma solidity ^0.8.9;
 /// @dev a free open source game counter
 
 contract TournamentTools{
-    function isInArray(uint[] memory array, uint value) public pure returns(bool) {
+    function isInIntArray(uint[] memory array, uint value) public pure returns(bool) {
+        for(uint i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return true;
+            }
+        }
+        return false;
+    }
+    function isInAddressArray(address[] memory array, address value) public pure returns(bool) {
         for(uint i = 0; i < array.length; i++) {
             if (array[i] == value) {
                 return true;
