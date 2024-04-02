@@ -33,6 +33,7 @@ contract Tournament is Scoreboard,Client,TournamentTools{
         bool isRoundStarted;
         bool exist;
         Teams winner;
+        bool finalized;
     }
     
     struct Ratings{
@@ -86,19 +87,23 @@ contract Tournament is Scoreboard,Client,TournamentTools{
         require(tournament[_tournamentNumber].exist == true, "Tournament does not exist");
         require(tournament[_tournamentNumber].brackets[_bracketNumber].exist == true, "Bracket does not exist");
         require(tournament[_tournamentNumber].brackets[_bracketNumber].games.length > 0, "No games to finalize");
+        require(tournament[_tournamentNumber].brackets[_bracketNumber].finalized == false, "Round has been finalized");
 
         for(uint i = 0; i < tournament[_tournamentNumber].brackets[_bracketNumber].games.length; i++){
             address player = tournament[_tournamentNumber].brackets[_bracketNumber].games[i].winner.teamAddress;
             if(player != address(0)){
                 Ratings memory winnerRating = findRating(_tournamentNumber, player);
-                updateRating(winnerRating.rating, winnerRating.rating + 100);
+                (uint winner,uint  loser) = updateRating(winnerRating.rating, winnerRating.rating + 100);
             }
         }
+
+        tournament[_tournamentNumber].brackets[_bracketNumber].finalized == true;
         return true;
     }
 
     function findRating(uint _tournamentNumber,address _teamAddress) public view returns(Ratings memory){
         require(tournament[_tournamentNumber].exist == true, "Tournament does not exist");
+
         for(uint i = 0; i < tournament[_tournamentNumber].ratings.length; i++){
             if(tournament[_tournamentNumber].ratings[i].team.teamAddress == _teamAddress){
                 return tournament[_tournamentNumber].ratings[i];
@@ -232,7 +237,8 @@ contract Tournament is Scoreboard,Client,TournamentTools{
                         exist: true
                     }),
                     exist: true
-                })
+                }),
+                finalized: false
             });
             _brackets[bracks] = newBracket;
         }
