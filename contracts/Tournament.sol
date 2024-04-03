@@ -93,7 +93,18 @@ contract Tournament is Scoreboard,Client,TournamentTools{
             address player = tournament[_tournamentNumber].brackets[_bracketNumber].games[i].winner.teamAddress;
             if(player != address(0)){
                 Ratings memory winnerRating = findRating(_tournamentNumber, player);
-                (uint winner,uint  loser) = updateRating(winnerRating.rating, winnerRating.rating + 100);
+                //get sum of loser ratings
+                uint loserRating = 0;
+
+                for(uint j = 0; j < tournament[_tournamentNumber].brackets[_bracketNumber].games[i].teams.length; j++){
+                    loserRating += findRating(_tournamentNumber,tournament[_tournamentNumber].brackets[_bracketNumber].games[i].teams[j].teamAddress).rating;
+                }
+
+                loserRating = loserRating /tournament[_tournamentNumber].brackets[_bracketNumber].games.length;
+
+                (uint winner,uint  loser) = updateRating(winnerRating.rating, loserRating + 100);
+
+                winnerRating.rating = winner;
             }
         }
 
