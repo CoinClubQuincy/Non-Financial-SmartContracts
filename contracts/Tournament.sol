@@ -95,7 +95,7 @@ contract Tournament is Scoreboard,Client,TournamentTools{
                 Ratings memory winnerRating = findRating(_tournamentNumber, player);
                 //get sum of loser ratings
                 uint loserRating = 0;
-
+                //get sum of loser ratings
                 for(uint j = 0; j < tournament[_tournamentNumber].brackets[_bracketNumber].games[i].teams.length; j++){
                     loserRating += findRating(_tournamentNumber,tournament[_tournamentNumber].brackets[_bracketNumber].games[i].teams[j].teamAddress).rating;
                 }
@@ -103,6 +103,11 @@ contract Tournament is Scoreboard,Client,TournamentTools{
                 loserRating = loserRating /tournament[_tournamentNumber].brackets[_bracketNumber].games.length;
 
                 (uint winner,uint  loser) = updateRating(winnerRating.rating, loserRating + 100);
+
+                for(uint j = 0; j < tournament[_tournamentNumber].brackets[_bracketNumber].games[i].teams.length; j++){
+                    uint newLoserRating = findRating(_tournamentNumber,tournament[_tournamentNumber].brackets[_bracketNumber].games[i].teams[j].teamAddress).rating;
+                    updateRating(winnerRating.rating, newLoserRating + 100);
+                }
 
                 winnerRating.rating = winner;
             }
