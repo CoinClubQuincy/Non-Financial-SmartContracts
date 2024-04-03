@@ -100,13 +100,16 @@ contract Tournament is Scoreboard,Client,TournamentTools{
                     loserRating += findRating(_tournamentNumber,tournament[_tournamentNumber].brackets[_bracketNumber].games[i].teams[j].teamAddress).rating;
                 }
 
+                //loser rating average for all teams
                 loserRating = loserRating /tournament[_tournamentNumber].brackets[_bracketNumber].games.length;
 
-                (uint winner,uint  loser) = updateRating(winnerRating.rating, loserRating + 100);
+                (uint winner,uint loser) = updateRating(winnerRating.rating, loserRating + 100);
 
+                //update all loser ratings
                 for(uint j = 0; j < tournament[_tournamentNumber].brackets[_bracketNumber].games[i].teams.length; j++){
-                    uint newLoserRating = findRating(_tournamentNumber,tournament[_tournamentNumber].brackets[_bracketNumber].games[i].teams[j].teamAddress).rating;
-                    updateRating(winnerRating.rating, newLoserRating + 100);
+                    Ratings memory newLoserRating = findRating(_tournamentNumber,tournament[_tournamentNumber].brackets[_bracketNumber].games[i].teams[j].teamAddress);
+                    (uint nwinner,uint nloser) = updateRating(winnerRating.rating, newLoserRating.rating + 100);
+                    newLoserRating.rating = nloser;
                 }
 
                 winnerRating.rating = winner;
