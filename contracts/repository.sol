@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT License
 pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "./repository.sol";
+
 /// @title Repository
 /// @author R Quincy Jones
 /// @notice this is a repository stored on chain to version code

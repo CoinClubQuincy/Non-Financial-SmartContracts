@@ -17,8 +17,8 @@ contract Admin is ERC1155{
     bool public isAdminContract = true;
 
     constructor(string memory _name,string memory _description,uint _keys,uint _keyLevel,bytes memory _managerContractBytes,string memory _URI)ERC1155(_URI) {
-        require(_keys >= 4, "not enough keys for key level");
-        require(keyLevelTotal > 3, "key level not heigh enough");
+        require(_keys >= 4, "not enough keys for key level: min requirement 4 keys");
+        require(keyLevelTotal > 3, "key level not heigh enough: min requirement 3 keys");
         
         keyLevelTotal = _keyLevel;
         appName = _name;
