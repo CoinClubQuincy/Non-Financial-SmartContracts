@@ -8,7 +8,7 @@ Welcome to the # Non_Financial_SmartContracts_Library repository! This repositor
 
 ## About
 
-# Non_Financial_SmartContracts_Library is a collection of smart contracts designed specifically for non-financial use cases. From managing inventories to orchestrating tournaments, our library offers a diverse set of contracts to address various decentralized application needs.
+ Non_Financial_SmartContracts_Library is a collection of smart contracts designed specifically for non-financial use cases. From managing inventories to orchestrating tournaments, our library offers a diverse set of contracts to address various decentralized application needs.
 
 ## Features
 
@@ -44,12 +44,8 @@ To start using # Non_Financial_SmartContracts_Library, simply clone this reposit
 
 We welcome contributions from the community to enhance and expand the functionality of # Non_Financial_SmartContracts_Library. Whether you want to report a bug, suggest a feature, or submit a pull request, your involvement is highly appreciated.
 
-## License
-
-# Non_Financial_SmartContracts_Library is licensed under the [License Name]. Please refer to the LICENSE file for more details.
-
 ## Contact
 
-If you have any questions, suggestions, or feedback, feel free to reach out to us at [contact@email.com].
+If you have any questions, suggestions, or feedback, feel free to reach out to us at [quincy@xdc.org].
 
 Thank you for choosing # Non_Financial_SmartContracts_Library! Happy coding!
