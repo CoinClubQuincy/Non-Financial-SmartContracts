@@ -1,6 +1,6 @@
 
 
-# Welcome to # Non_Financial_SmartContracts_Library Repository
+# Welcome to Non_Financial_SmartContracts_Library Repository
 
 ## Introduction
 
