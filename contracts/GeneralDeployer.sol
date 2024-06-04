@@ -11,28 +11,28 @@ contract ManagerDeployer{
     uint public totalContracts = 0;
     string public deployerName;
     string public deployerDescription;
-    bytes public singleContractABI;
+    bytes public singleContractByteCode;
     bool public singleDeployerActive = false;
 
-    event createNewRepo(address indexed creator, address indexed gitXDCContract);
+    event createNewContract(address indexed creator, address indexed gitXDCContract);
 
-    mapping(uint => Managers) public repos;
+    mapping(uint => Managers) public contracts;
     struct Managers {
         string name;
         string description;
         address contractAddress;
     }
 
-    constructor(string memory _name, string memory _description,bool _singleDeployerActive,bytes memory _singleContractABI) {
+    constructor(string memory _name, string memory _description,bool _singleDeployerActive,bytes memory _singleContractByteCode) {
         deployerName = _name;
         deployerDescription = _description;
         singleDeployerActive = _singleDeployerActive;
-        singleContractABI = _singleContractABI;
+        singleContractByteCode = _singleContractByteCode;
     }
 
-    modifier singleDeployer(bytes memory _deployedSingleContractABI) {
+    modifier singleDeployer(bytes memory _deployedsingleContractByteCode) {
         if(singleDeployerActive == true){ 
-            require(keccak256(singleContractABI) == keccak256(_deployedSingleContractABI), "this deployer can only deploy a single contract type");
+            require(keccak256(singleContractByteCode) == keccak256(_deployedsingleContractByteCode), "this deployer can only deploy a single contract type");
         }
         _;
     }
@@ -40,8 +40,8 @@ contract ManagerDeployer{
     function createManager(string memory _name, string memory _description, bytes memory _contractByteCode, bytes memory _constructorArgs) public singleDeployer(_contractByteCode)  returns(address) {
         bytes memory bytecodeWithConstructorArgs = abi.encodePacked(_contractByteCode, _constructorArgs);
         address newContract = createChild(bytecodeWithConstructorArgs);
-        repos[totalContracts] = Managers(_name, _description, newContract);
-        emit createNewRepo(msg.sender, newContract);
+        contracts[totalContracts] = Managers(_name, _description, newContract);
+        emit createNewContract(msg.sender, newContract);
         totalContracts++; 
         return newContract;
     }
@@ -55,10 +55,10 @@ contract ManagerDeployer{
     }
 
     function viewAllContracts() public view returns (Managers[] memory) {
-        Managers[] memory reposList = new Managers[](totalContracts);
+        Managers[] memory contractList = new Managers[](totalContracts);
         for (uint i = 0; i < totalContracts; i++) {
-            reposList[i] = repos[i];
+            contractList[i] = contracts[i];
         }
-        return reposList;
+        return contractList;
     }
 }
